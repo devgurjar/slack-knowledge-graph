@@ -32,4 +32,16 @@ ENV/
 *.swo
 
 # Streamlit
-.streamlit/ 
+.streamlit/
+
+# Environment variables and sensitive data
+.env
+*.env
+.env.local
+.env.*.local
+
+# Data files that might contain sensitive information
+slack_threads_dump.json
+qa_pairs.json
+knowledge_graph.json
+knowledge_graph.pkl 
