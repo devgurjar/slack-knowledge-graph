@@ -3,8 +3,16 @@ import json
 
 st.title("Slack Knowledge Graph Explorer")
 
-with open('knowledge_graph.json', 'r', encoding='utf-8') as f:
-    data = json.load(f)
+# Load the knowledge graph data
+try:
+    with open('knowledge_graph.json', 'r', encoding='utf-8') as f:
+        data = json.load(f)
+except FileNotFoundError:
+    st.error("Error: knowledge_graph.json file not found. Please make sure the file exists in the same directory.")
+    st.stop()
+except json.JSONDecodeError:
+    st.error("Error: Invalid JSON format in knowledge_graph.json")
+    st.stop()
 
 st.write(f"Total entries in knowledge base: {len(data)}")
 
@@ -13,19 +21,26 @@ query = st.text_input("Search for any keyword (company, component, question, or 
 if query:
     query = query.lower()
     results = []
+    
     for item in data:
-        # Get the messages field and check if it contains the search term
         if 'messages' in item:
-            messages = item['messages'].lower()
-            if query in messages:
-                try:
-                    # Extract the JSON string from the messages field
+            try:
+                # Handle string JSON content
+                if isinstance(item['messages'], str):
                     json_str = item['messages'].strip('```json\n').strip('```')
                     message_data = json.loads(json_str)
-                    results.append(message_data)
-                except:
-                    continue
-    
+                    # Convert all values to string and join them for searching
+                    content = ' '.join(str(v) for v in message_data.values()).lower()
+                    if query in content:
+                        results.append(message_data)
+                # Handle direct dictionary content
+                elif isinstance(item['messages'], dict):
+                    content = ' '.join(str(v) for v in item['messages'].values()).lower()
+                    if query in content:
+                        results.append(item['messages'])
+            except (json.JSONDecodeError, AttributeError) as e:
+                continue
+
     st.write(f"Found {len(results)} matching results")
     
     for item in results:
